@@ -1,0 +1,21 @@
+{
+  "name": "wamprx.test",
+  "version": "0.0.1",
+  "description": "Testing the wamprx.js lib",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/index.js",
+    "watch": "nodemon -e ts --watch src --exec 'npm start'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Johan 't Hart",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^1.19.1",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "wamprx": "^1.1.2"
+  }
+}
