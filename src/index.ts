@@ -4,6 +4,7 @@ import { switchMap, map } from 'rxjs/operators';
 import { merge } from 'rxjs';
 
 console.log('Play around with beatbox on https://demo.crossbar.io/beatbox/index.html');
+console.log('Use channel 692497');
 
 const myMakeObsWs = makeObservableWebSocket(
     (url, protocol) => new WebSocket(url, protocol));
