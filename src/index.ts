@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
-import { connectWampChannel, makeObservableWebSocket } from 'wamprx';
-import { switchMap, map, shareReplay } from 'rxjs/operators';
-import { merge, interval } from 'rxjs';
+import { connectWampChannel, makeObservableWebSocket, makeConsoleLogger, WampChannel } from 'wamprx';
+import { switchMap, map, shareReplay, flatMap, take } from 'rxjs/operators';
+import { merge, interval, using, of, never, from } from 'rxjs';
 
 console.log('Play around with beatbox on https://demo.crossbar.io/beatbox/index.html');
 console.log('Use channel 692497');
@@ -15,7 +15,8 @@ const myMakeObsWs = makeObservableWebSocket(
     (url, protocol) => new WebSocket(url, protocol));
 
 const channel$ = connectWampChannel(
-    'wss://demo.crossbar.io/ws', 'crossbardemo', undefined, myMakeObsWs
+    'wss://demo.crossbar.io/ws', 'crossbardemo', undefined,
+    myMakeObsWs, makeConsoleLogger
 ).pipe(
     shareReplay({ bufferSize: 1, refCount: true }));
 
@@ -26,6 +27,8 @@ channel$.pipe(
     )))
     .subscribe(received => console.log('Received: ' + JSON.stringify(received!)));
 
+
+/*
 channel$.pipe(
     switchMap(channel => interval(1000).pipe(
         switchMap(seq => seq % 2 === 0
@@ -34,3 +37,21 @@ channel$.pipe(
         )
     ))
 ).subscribe(pubId => console.log(`Publication id: ${pubId}`));
+*/
+
+const callTestAdd = (channel: WampChannel) => interval(1000).pipe(
+    take(10),
+    flatMap(seq =>
+        channel.call('io.crossbar.demo.testAdd', [seq, seq + 1]).pipe(
+            map(([[answer]]) => `${seq} + ${seq + 1} = ${answer}`))
+    ));
+
+channel$.pipe(
+    switchMap(channel =>
+        from(channel.register('io.crossbar.demo.testAdd',
+            ([a, b]) => of([[a + b]])
+        )).pipe(
+            flatMap(reg => using(() => reg, _ =>
+                callTestAdd(channel))))
+    ))
+    .subscribe(answer => console.log(`Sum: ${answer}`));
