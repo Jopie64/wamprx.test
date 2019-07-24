@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
-import { connectWampChannel, makeObservableWebSocket, makeConsoleLogger, WampChannel, toPromise, RegisteredFunc, toWampFunc } from 'wamprx';
+import { connectWampChannel, makeObservableWebSocket, makeConsoleLogger, WampChannel, toPromise, RegisteredFunc, toWampFunc, wampCall } from 'wamprx';
 import { switchMap, map, shareReplay, flatMap, take } from 'rxjs/operators';
-import { merge, interval, using, of, from } from 'rxjs';
+import { merge, interval, using, of, from, Observable } from 'rxjs';
 
 console.log('Play around with beatbox on https://demo.crossbar.io/beatbox/index.html');
 console.log('Use channel 692497');
@@ -44,8 +44,8 @@ const registerAndCallTestAdd = () => {
     const callTestAdd = (channel: WampChannel) => interval(1000).pipe(
         take(10),
         flatMap(seq =>
-            channel.call('io.crossbar.demo.testAdd', [seq, seq + 1]).pipe(
-                map(([[answer]]) => `${seq} + ${seq + 1} = ${answer}`))
+            wampCall(channel, 'io.crossbar.demo.testAdd', seq, seq + 1).pipe(
+                map(answer => `${seq} + ${seq + 1} = ${answer}`))
         ));
 
     channel$.pipe(
@@ -73,7 +73,7 @@ const makeImperativeChannel = async () => {
     {
         await sleep(1000);
         
-        const [[answer]] = await channel.call('io.crossbar.demo.testAdd', [100, 100]).toPromise();
+        const answer = await wampCall(channel, 'io.crossbar.demo.testAdd', 100, 100).toPromise();
 
         console.log('Answer:', answer);
     } finally {
