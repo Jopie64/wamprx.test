@@ -8,9 +8,15 @@ const channel$ = makeChannel$('ws://localhost:25000/ws', 'realm1');
 
 export const runLoadTest = () => runWithChannel(channel$, runLoadTestWithChannel);
 
+var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; //0123456789';
+
+const makeRandomName = (length: number) =>
+    range(0, length).reduce((a, c) => a + characters.charAt(Math.floor(Math.random() * characters.length)), '')
+
 const runLoadTestWithChannel = async (channel: WampChannel) => {
-    const fnames = range(0, 2000).map(n => `greetMe${n}`);
-    console.log('Connected. Begin test...');
+    //const fnames = range(0, 2000).map(n => `greetMe${n}`);
+    const fnames = range(0, 2000).map(n => makeRandomName(500));
+    console.log('Connected. Begin test...', fnames[0]);
     const start = process.hrtime();
     const result = await combineLatest(
         fnames.map(fname => from(channel.register(fname, ([name]) => of([[`Hello ${name}!`]]))).pipe(
