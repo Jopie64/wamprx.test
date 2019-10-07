@@ -1,8 +1,13 @@
 import { makeChannel$, runWithChannel } from './channel'
-import { mergeMap, map, shareReplay, take } from 'rxjs/operators';
-import { of, from, using, combineLatest, NEVER, concat } from 'rxjs';
+import { mergeMap, map, shareReplay, take, reduce } from 'rxjs/operators';
+import { of, from, using, combineLatest, NEVER, concat, merge } from 'rxjs';
 import { WampChannel } from 'wamprx';
 import { range } from 'ramda';
+
+
+const nFunctions = 2000;
+const nNameLength = 500;
+const nCalls = 3;
 
 const channel$ = makeChannel$('ws://localhost:25000/ws', 'realm1');
 
@@ -18,7 +23,7 @@ const printTime = (t: bigint) =>
 
 const runLoadTestWithChannel = async (channel: WampChannel) => {
     //const fnames = range(0, 2000).map(n => `greetMe${n}`);
-    const fnames = range(0, 2000).map(n => makeRandomName(500));
+    const fnames = range(0, nFunctions).map(n => makeRandomName(nNameLength));
     console.log('Connected. Begin test...', fnames[0]);
 
     console.log('Registering...');
@@ -35,8 +40,9 @@ const runLoadTestWithChannel = async (channel: WampChannel) => {
 
     console.log(`Registered ${regResult.length} functions in ${printTime(registeredTs - start)}s. Calling...`);
     const result = await combineLatest(fnames.map(
-        fname => channel.call(fname, ['Johan']).pipe(
-            map(([[result]]: any) => result === 'Hello Johan!'))
+        fname => combineLatest(range(0, nCalls).map(n => channel.call(fname, [`Johan ${n}`]).pipe(
+                map(([[result]]: any) => result === `Hello Johan ${n}!`))
+        )).pipe(map(r => r.reduce((a, c) => a && c)))
     )).toPromise();
 
     const calledTs = process.hrtime.bigint();
