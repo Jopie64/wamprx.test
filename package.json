@@ -12,11 +12,13 @@
   "author": "Johan 't Hart",
   "license": "ISC",
   "devDependencies": {
+    "@types/ramda": "^0.26.26",
     "@types/ws": "^6.0.1",
     "nodemon": "^1.19.1",
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "ramda": "^0.26.1",
     "rxjs": "^6.5.2",
     "wamprx": "^1.5.0",
     "ws": "^7.1.0"
