@@ -1,3 +1,6 @@
-import { runBeatbox } from "./beatbox";
+import { runBeatbox } from './beatbox';
+import { runLoadTest } from './loadTest';
 
-runBeatbox();
+// runBeatbox();
+
+runLoadTest();
