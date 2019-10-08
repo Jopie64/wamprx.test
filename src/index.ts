@@ -3,4 +3,4 @@ import { runLoadTest } from './loadTest';
 
 // runBeatbox();
 
-runLoadTest();
+runLoadTest().then(_ => process.exit());
