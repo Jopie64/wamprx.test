@@ -1,13 +1,13 @@
 import { makeChannel$, runWithChannel } from './channel'
-import { mergeMap, map, shareReplay, take, reduce } from 'rxjs/operators';
+import { mergeMap, map, shareReplay, take, reduce, mergeAll, scan } from 'rxjs/operators';
 import { of, from, using, combineLatest, NEVER, concat, merge } from 'rxjs';
 import { WampChannel } from 'wamprx';
 import { range } from 'ramda';
 
 
-const nFunctions = 4000;
-const nNameLength = 5;
-const nCalls = 3;
+const nFunctions = 6000;
+const nNameLength = 500;
+const nCalls = 1;
 
 const channel$ = makeChannel$('ws://localhost:25000/ws', 'realm1');
 
@@ -39,20 +39,23 @@ const runLoadTestWithChannel = async (channel: WampChannel) => {
     const registeredTs = process.hrtime.bigint();
 
     console.log(`Registered ${regResult.length} functions in ${printTime(registeredTs - start)}s. Calling ${nCalls} times...`);
-    const result = await combineLatest(fnames.map(
-        fname => combineLatest(range(0, nCalls).map(n => channel.call(fname, [`Johan ${n}`]).pipe(
+    const result = await merge(fnames.map(
+        fname => merge(range(0, nCalls).map(n => channel.call(fname, [`Johan ${n}`]).pipe(
                 map(([[result]]: any) => result === `Hello Johan ${n}!`))
-        )).pipe(map(r => r.reduce((a, c) => a && c)))
-    )).toPromise();
+        )).pipe(mergeAll())
+    )).pipe(
+        mergeAll(),
+        reduce(({ok, error}, c) => c ? { ok: ok + 1, error} : {ok, error: error + 1}, {ok: 0, error: 0}))
+        .toPromise();
 
     const calledTs = process.hrtime.bigint();
     console.log(`Called in ${printTime(calledTs - registeredTs)}s Unregistering...`);
     registrations.unsubscribe();
     const duration = process.hrtime.bigint() - start;
-    const resultOk = result.reduce((a, c) => a && c);
+    const resultOk = result.error === 0;
     if (resultOk) {
-        console.log(`Result ${printTime(duration)}s`, result.length);
+        console.log(`Result ${printTime(duration)}s`, result.ok);
     } else {
-        console.error(`Result error ${printTime(duration)}s`, result.length);
+        console.error(`Result error ${printTime(duration)}s`, result);
     }
 }
