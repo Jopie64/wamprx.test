@@ -1,6 +1,6 @@
-import { runBeatbox } from './beatbox';
-import { runLoadTest } from './loadTest';
+import { runBeatbox } from './beatbox.js';
+import { runLoadTest } from './loadTest.js';
 
-// runBeatbox();
+runBeatbox();
 
-runLoadTest().then(_ => process.exit());
+// runLoadTest().then(_ => process.exit());

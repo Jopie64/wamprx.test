@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  crossbar:
+    image: docker.io/crossbario/crossbar:latest
+    container_name: wamprx-crossbar
+    ports:
+      - "25000:25000"
+    volumes:
+      - ./.crossbar/config.json:/node/.crossbar/config.json:ro,Z
+    restart: unless-stopped

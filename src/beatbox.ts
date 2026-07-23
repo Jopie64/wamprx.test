@@ -1,13 +1,11 @@
 import { connectWampChannel, makeConsoleLogger, WampChannel, toPromise, toWampFunc, wampCall } from 'wamprx';
-import { switchMap, map, flatMap, take } from 'rxjs/operators';
-import { merge, interval, using, of, from } from 'rxjs';
-import { makeChannel$, myMakeObsWs } from './channel';
+import { switchMap, map, mergeMap, take, merge, interval, using, of, from } from 'rxjs';
+import { makeChannel$, myMakeObsWs } from './channel.js';
 
-console.log('Play around with beatbox on https://demo.crossbar.io/beatbox/index.html');
+console.log('Beatbox test on local Crossbar router or https://demo.crossbar.io/beatbox/index.html');
 console.log('Use channel 692497');
 
-
-const channel$ = makeChannel$('wss://demo.crossbar.io/ws', 'crossbardemo');
+const channel$ = makeChannel$('ws://localhost:25000/ws', 'crossbardemo');
 
 const subscribeToBeatbox = () => {
     channel$.pipe(
@@ -18,11 +16,10 @@ const subscribeToBeatbox = () => {
         .subscribe(received => console.log('Received: ' + JSON.stringify(received!)));
 };
 
-
 const registerAndCallTestAdd = () => {
     const callTestAdd = (channel: WampChannel) => interval(1000).pipe(
         take(10),
-        flatMap(seq =>
+        mergeMap(seq =>
             wampCall(channel, 'io.crossbar.demo.testAdd', seq, seq + 1).pipe(
                 map(answer => `${seq} + ${seq + 1} = ${answer}`))
         ));
@@ -30,9 +27,9 @@ const registerAndCallTestAdd = () => {
     channel$.pipe(
         switchMap(channel =>
             from(channel.register('io.crossbar.demo.testAdd',
-                toWampFunc((a, b) => of(a + b))
+                toWampFunc((a: any, b: any) => of(a + b))
             )).pipe(
-                flatMap(reg => using(() => reg, _ =>
+                mergeMap(reg => using(() => reg, _ =>
                     callTestAdd(channel))))
         ))
         .subscribe(
@@ -45,7 +42,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const makeImperativeChannel = async () => {
     const channel = await toPromise(connectWampChannel(
-            'wss://demo.crossbar.io/ws', 'crossbardemo', undefined,
+            'ws://localhost:25000/ws', 'crossbardemo', undefined,
             myMakeObsWs, makeConsoleLogger
         ));
     try
@@ -62,10 +59,8 @@ const makeImperativeChannel = async () => {
 
 export const runBeatbox = () => {
     subscribeToBeatbox();
-    // beatOnBeatbox();
     registerAndCallTestAdd();
     makeImperativeChannel()
         .then(_ => console.log('Imperative thing done'))
         .catch(e => console.error('Imperative thing failed', e));
 };
-
