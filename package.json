@@ -13,8 +13,8 @@
   "dependencies": {
     "ramda": "^0.32.0",
     "rxjs": "^7.8.2",
-    "rxjs-utilities": "^2.2.1",
-    "wamprx": "^2.2.1",
+    "rxjs-utilities": "^2.2.2",
+    "wamprx": "^2.2.2",
     "ws": "^8.21.3"
   },
   "devDependencies": {
